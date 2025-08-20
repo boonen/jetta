@@ -29,7 +29,7 @@ public class TestApplication {
 
     }
 
-    static record TextResponse(String text) {
+    record TextResponse(String text) {
     }
 
 }
