@@ -77,7 +77,7 @@ public class SampleIT extends IntellijHttpClientTestSupport {
 }
 ```
 
-There are 4 things to note:
+There are four things to note:
 1. Configuration is defined using the `@IntellijHttpClientFile` annotation. The `value` property is required and should 
    point to your HTTP Client file. The path is relative to the root of your Maven project.
 2. The test class must extend `IntellijHttpClientTestSupport`, which automatically bootstraps the IntelliJ HTTP Client 
@@ -91,7 +91,7 @@ If your test executes correctly, then the JUnit5 integration will generate a tes
 defined in the specified IntelliJ HTTP Client file. For more information on how to write Client Tests, please refer to 
 [Jetbrains' IntelliJ documentation](https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html#create-a-physical-http-request-file).
 
-The [test/resources/ijhttp](./test/resources/ijhttp) directory contains an example HTTP Client file that you can use
+The [src/test/resources/ijhttp](./src/test/resources/ijhttp) directory contains an example HTTP Client file that you can use
 to draw inspiration from.
 
 ## Development
