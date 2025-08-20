@@ -20,7 +20,7 @@ runs:
   using: "composite"
   steps:
     - name: Cache local Maven repository
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.m2/repository
         key: ${{ github.ref.name }}-maven-${{ hashFiles('**/pom.xml') }}

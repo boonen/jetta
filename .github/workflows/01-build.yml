@@ -1,4 +1,4 @@
-name: Build (compile + unit test)
+name: Build (compile and test)
 
 env:
   MAVEN_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
