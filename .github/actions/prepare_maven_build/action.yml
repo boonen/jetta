@@ -1,0 +1,33 @@
+name: prepare_maven_build
+author: janb
+description: Prepare a cached Maven build
+
+inputs:
+  java-version:
+    description: 'Java version to use (e.g., 24)'
+    required: true
+    default: '24'
+  java-distribution:
+    description: 'Java distribution to use (e.g., temurin, zulu, etc.)'
+    required: false
+    default: 'temurin'
+
+#env:
+#  MAVEN_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Dmaven.repo.local=${CI_PROJECT_DIR}/.m2/repository"
+#  MAVEN_CLI_OPTS: "-B -ntp -fae -T 2C -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -Dmaven.install.skip=true -Dmaven.compiler.useIncrementalCompilation=false -DlastModGranularityMs=1000000"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache local Maven repository
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2/repository
+        key: ${{ github.ref.name }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ github.ref.name }}-maven-
+    - name: Set up JDK 24
+      uses: actions/setup-java@v4
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}

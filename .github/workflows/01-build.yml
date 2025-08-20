@@ -1,0 +1,44 @@
+name: Build (compile + unit test)
+
+env:
+  MAVEN_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+  MAVEN_CLI_OPTS: "-B -ntp -fae -T 2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -Dmaven.install.skip=true -Dmaven.compiler.useIncrementalCompilation=false -DlastModGranularityMs=1000000"
+  JACOCO_MAVEN_PLUGIN: "org.jacoco:jacoco-maven-plugin:0.8.13"
+  SONARQUBE_MAVEN_PLUGIN: "org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751"
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        required: true
+        type: string
+        default: "ubuntu-latest"
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/prepare_maven_build
+      - name: Build
+        run: mvn -B -U test-compile $MAVEN_CLI_OPTS
+
+  test:
+    runs-on: "ubuntu-latest"
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/prepare_maven_build
+      - name: Run unit tests
+        run: mvn -B -U -DskipITs=true $JACOCO_MAVEN_PLUGIN:prepare-agent test $JACOCO_MAVEN_PLUGIN:report
+
+  integration-test:
+    runs-on: "ubuntu-latest"
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/prepare_maven_build
+      - name: Run integration tests
+        run: mvn -B -U -P it -DskipTests=true $JACOCO_MAVEN_PLUGIN:prepare-agent verify $JACOCO_MAVEN_PLUGIN:report
