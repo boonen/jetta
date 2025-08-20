@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible problem
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: What happened and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Steps, sample .http files, logs, container info, etc.
+      render: bash
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: jetta-core version (e.g., 0.1.0)
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS, JDK, Docker/Testcontainers versions
