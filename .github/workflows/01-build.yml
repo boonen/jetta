@@ -23,7 +23,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
       - name: Build
-        run: mvn -B -U test-compile $MAVEN_CLI_OPTS
+        run: mvn $MAVEN_CLI_OPTS test-compile
+      - name: Upload /target directory
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-classes
+          path: ./target/
+          if-no-files-found: error
 
   test:
     runs-on: "ubuntu-latest"
@@ -31,8 +37,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
+      - name: Download compiled classes
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-classes
+          path: ./target
       - name: Run unit tests
-        run: mvn -B -U -DskipITs=true $JACOCO_MAVEN_PLUGIN:prepare-agent test $JACOCO_MAVEN_PLUGIN:report
+        run: mvn $MAVEN_CLI_OPTS -DskipITs=true $JACOCO_MAVEN_PLUGIN:prepare-agent test $JACOCO_MAVEN_PLUGIN:report
 
   integration-test:
     runs-on: "ubuntu-latest"
@@ -40,5 +51,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
+      - name: Download compiled classes
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-classes
+          path: ./target
       - name: Run integration tests
-        run: mvn -B -U -P it -DskipTests=true $JACOCO_MAVEN_PLUGIN:prepare-agent verify $JACOCO_MAVEN_PLUGIN:report
+        run: mvn $MAVEN_CLI_OPTS -DskipTests=true $JACOCO_MAVEN_PLUGIN:prepare-agent verify $JACOCO_MAVEN_PLUGIN:report
