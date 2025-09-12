@@ -7,7 +7,6 @@ import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
 import org.testcontainers.containers.wait.strategy.WaitStrategyTarget;
 
-import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,11 +15,12 @@ import java.util.Set;
 
 public class ExitCodeWaitStrategy extends AbstractWaitStrategy {
 
-    private final Set<Integer> allowedExitCodes = new HashSet<>(Collections.singleton(0));
+    private final DockerClient client = DockerClientFactory.instance().client();
+    private final Set<Long> allowedExitCodes = new HashSet<>(Collections.singleton(0L));
     private Duration pollInterval = Duration.ofMillis(200);
     private Duration maxRunningTime = null; // null => unlimited
 
-    public ExitCodeWaitStrategy withAllowedExitCodes(int... codes) {
+    public ExitCodeWaitStrategy withAllowedExitCodes(long... codes) {
         Arrays.stream(codes).forEach(allowedExitCodes::add);
         return this;
     }
@@ -38,7 +38,6 @@ public class ExitCodeWaitStrategy extends AbstractWaitStrategy {
     @Override
     protected void waitUntilReady() {
         final WaitStrategyTarget target = this.waitStrategyTarget;
-        final DockerClient client = DockerClientFactory.instance().client();
         final String containerId = target.getContainerId();
 
         final long startNanos = System.nanoTime();
@@ -56,7 +55,7 @@ public class ExitCodeWaitStrategy extends AbstractWaitStrategy {
                     client.inspectContainerCmd(containerId).exec().getState();
 
             boolean running = Boolean.TRUE.equals(state.getRunning());
-            Integer exitCode = getExitCodeCompat(state);
+            var exitCode = state.getExitCodeLong();
 
             if (!running && exitCode != null) {
                 if (!allowedExitCodes.contains(exitCode)) {
@@ -77,20 +76,4 @@ public class ExitCodeWaitStrategy extends AbstractWaitStrategy {
         }
     }
 
-    private static Integer getExitCodeCompat(InspectContainerResponse.ContainerState state) {
-        try {
-            return extractExitCode(state);
-        } catch (ReflectiveOperationException _) {
-            return null;
-        }
-    }
-
-    private static Integer extractExitCode(InspectContainerResponse.ContainerState state) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        try {
-            return (Integer) state.getClass().getMethod("getExitCode").invoke(state);
-        } catch (NoSuchMethodException _) {
-            Long val = (Long) state.getClass().getMethod("getExitCodeLong").invoke(state);
-            return val == null ? null : val.intValue();
-        }
-    }
 }
