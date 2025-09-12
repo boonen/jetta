@@ -6,12 +6,6 @@ env:
   JACOCO_MAVEN_PLUGIN: "org.jacoco:jacoco-maven-plugin:0.8.13"
 
 on:
-  workflow_call:
-    inputs:
-      runner:
-        required: true
-        type: string
-        default: "ubuntu-latest"
   push:
     branches:
       - "main"
@@ -59,3 +53,7 @@ jobs:
           path: ./target
       - name: Run integration tests
         run: mvn ${MAVEN_CLI_OPTS} -DskipTests=true ${JACOCO_MAVEN_PLUGIN}:prepare-agent verify ${JACOCO_MAVEN_PLUGIN}:report
+
+  quality-check:
+    needs: [test, integration-test]
+    uses: ./.github/workflows/02-sonarcloud.yml

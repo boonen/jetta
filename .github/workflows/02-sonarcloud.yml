@@ -4,18 +4,23 @@ env:
   SONARQUBE_MAVEN_PLUGIN: "org.sonarsource.scanner.maven:sonar-maven-plugin:5.2.0.4988"
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    types: [ opened, synchronize, reopened ]
   workflow_run:
     workflows:
       - Build
     types:
       - completed
+    pull_request:
+    push:
+      branches:
+        - main
+
+permissions:
+  actions: read   # required to read artifacts from another run
+  contents: read
 
 jobs:
   sonar:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,6 +30,8 @@ jobs:
       - name: Download compiled classes
         uses: actions/download-artifact@v4
         with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
           name: compiled-classes
           path: ./target
       - name: SonarCloud scan
