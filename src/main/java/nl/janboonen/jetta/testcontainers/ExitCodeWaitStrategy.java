@@ -15,7 +15,6 @@ import java.util.Set;
 
 public class ExitCodeWaitStrategy extends AbstractWaitStrategy {
 
-    private final DockerClient client = DockerClientFactory.instance().client();
     private final Set<Long> allowedExitCodes = new HashSet<>(Collections.singleton(0L));
     private Duration pollInterval = Duration.ofMillis(200);
     private Duration maxRunningTime = null; // null => unlimited
@@ -37,6 +36,7 @@ public class ExitCodeWaitStrategy extends AbstractWaitStrategy {
 
     @Override
     protected void waitUntilReady() {
+        final DockerClient client = DockerClientFactory.instance().client();
         final WaitStrategyTarget target = this.waitStrategyTarget;
         final String containerId = target.getContainerId();
 
