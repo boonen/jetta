@@ -1,0 +1,41 @@
+name: QualityGate
+
+env:
+  SONARQUBE_MAVEN_PLUGIN: "org.sonarsource.scanner.maven:sonar-maven-plugin:5.2.0.4988"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+  workflow_run:
+    workflows:
+      - Build
+    types:
+      - completed
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # better analysis
+      - uses: ./.github/actions/prepare_maven_build
+      - name: Download compiled classes
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-classes
+          path: ./target
+      - name: SonarCloud scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn -B -DskipTests \
+            -Dsonar.organization=boonen \
+            -Dsonar.projectKey=boonen_jetta \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.sonar.dependencyCheck.htmlReportPath \
+            -Dsonar.scm.revision=${{ github.event.pull_request.head.sha || github.sha }} \
+            -Dsonar.branch.name=${{ github.event.pull_request.head.ref || github.ref_name }} \
+            $SONARQUBE_MAVEN_PLUGIN:sonar

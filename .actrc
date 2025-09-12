@@ -1,0 +1,4 @@
+--env-file .env
+--secret-file .act_secrets
+-P ubuntu-latest=quay.io/jamezp/act-maven
+--artifact-server-path $(PWD)/.artifacts
