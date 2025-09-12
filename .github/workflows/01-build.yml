@@ -13,6 +13,8 @@ on:
         type: string
         default: "ubuntu-latest"
   push:
+    branches:
+      - "main"
   pull_request:
 
 jobs:
@@ -43,9 +45,6 @@ jobs:
           path: ./target
       - name: Run unit tests
         run: mvn ${MAVEN_CLI_OPTS} -DskipITs=true ${JACOCO_MAVEN_PLUGIN}:prepare-agent test ${JACOCO_MAVEN_PLUGIN}:report
-      - name: Publish test report
-        if: ${{ !env.ACT && (success() || failure()) }}
-        uses: scacap/action-surefire-report@v1
 
   integration-test:
     runs-on: "ubuntu-latest"
@@ -60,19 +59,3 @@ jobs:
           path: ./target
       - name: Run integration tests
         run: mvn ${MAVEN_CLI_OPTS} -DskipTests=true ${JACOCO_MAVEN_PLUGIN}:prepare-agent verify ${JACOCO_MAVEN_PLUGIN}:report
-      - name: Publish test report
-        if: ${{ !env.ACT && (success() || failure()) }}
-        uses: scacap/action-surefire-report@v1
-
-      - name: JaCoCo Code Coverage Report
-        id: jacoco_reporter
-        uses: PavanMudigonda/jacoco-reporter@v5.0
-        with:
-          coverage_results_path: jacoco-report/test.xml
-          coverage_report_name: Coverage
-          coverage_report_title: JaCoCo
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          skip_check_run: false
-          minimum_coverage: 80
-          fail_below_threshold: false
-          publish_only_summary: false
