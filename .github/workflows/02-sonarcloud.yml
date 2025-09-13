@@ -6,6 +6,10 @@ env:
 on:
   workflow_call:
 
+permissions:
+  actions: read
+  contents: read
+
 jobs:
   sonar:
     runs-on: ubuntu-latest
