@@ -1,19 +1,14 @@
-name: Build (compile and test)
+name: Build
 
 env:
   MAVEN_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
   MAVEN_CLI_OPTS: "-B -ntp -fae -T 2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -Dmaven.install.skip=true -Dmaven.compiler.useIncrementalCompilation=false -DlastModGranularityMs=1000000"
   JACOCO_MAVEN_PLUGIN: "org.jacoco:jacoco-maven-plugin:0.8.13"
-  SONARQUBE_MAVEN_PLUGIN: "org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751"
 
 on:
-  workflow_call:
-    inputs:
-      runner:
-        required: true
-        type: string
-        default: "ubuntu-latest"
   push:
+    branches:
+      - "main"
   pull_request:
 
 jobs:
@@ -23,7 +18,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
       - name: Build
-        run: mvn -B -U test-compile $MAVEN_CLI_OPTS
+        run: mvn ${MAVEN_CLI_OPTS} test-compile
+      - uses: ./.github/actions/upload_intermediate_artifacts
 
   test:
     runs-on: "ubuntu-latest"
@@ -31,8 +27,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
+      - uses: ./.github/actions/download_intermediate_artifacts
       - name: Run unit tests
-        run: mvn -B -U -DskipITs=true $JACOCO_MAVEN_PLUGIN:prepare-agent test $JACOCO_MAVEN_PLUGIN:report
+        run: mvn ${MAVEN_CLI_OPTS} -DskipITs=true ${JACOCO_MAVEN_PLUGIN}:prepare-agent test ${JACOCO_MAVEN_PLUGIN}:report
+      - uses: ./.github/actions/upload_intermediate_artifacts
+        with:
+          artifact-name: unit-test-results
+          source-folder: ./target/surefire-reports/
 
   integration-test:
     runs-on: "ubuntu-latest"
@@ -40,5 +41,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
+      - uses: ./.github/actions/download_intermediate_artifacts
       - name: Run integration tests
-        run: mvn -B -U -P it -DskipTests=true $JACOCO_MAVEN_PLUGIN:prepare-agent verify $JACOCO_MAVEN_PLUGIN:report
+        run: mvn ${MAVEN_CLI_OPTS} -DskipTests=true ${JACOCO_MAVEN_PLUGIN}:prepare-agent verify ${JACOCO_MAVEN_PLUGIN}:report
+      - uses: ./.github/actions/upload_intermediate_artifacts
+        with:
+          artifact-name: integration-test-results
+          source-folder: ./target/failsafe-reports/
+      - uses: ./.github/actions/upload_intermediate_artifacts
+        with:
+          artifact-name: coverage-reports
+          source-folder: ./target/site/jacoco/
+
+  quality-check:
+    needs: [test, integration-test]
+    uses: ./.github/workflows/02-sonarcloud.yml
+    secrets: inherit

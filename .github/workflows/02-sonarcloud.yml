@@ -1,0 +1,53 @@
+name: QualityGate
+
+env:
+  SONARQUBE_MAVEN_PLUGIN: "org.sonarsource.scanner.maven:sonar-maven-plugin:5.2.0.4988"
+
+on:
+  workflow_call:
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # better analysis
+      - uses: ./.github/actions/prepare_maven_build
+      - uses: ./.github/actions/download_intermediate_artifacts
+      - uses: ./.github/actions/download_intermediate_artifacts
+        with:
+          artifact-name: unit-test-results
+          destination-folder: ./target/surefire-reports
+      - uses: ./.github/actions/download_intermediate_artifacts
+        with:
+          artifact-name: integration-test-results
+          destination-folder: ./target/failsafe-reports
+      - uses: ./.github/actions/download_intermediate_artifacts
+        with:
+          artifact-name: coverage-reports
+          destination-folder: ./target/site/jacoco
+      - name: Assemble Sonar arguments
+        id: sonarargs
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "args=-Dsonar.pullrequest.key=${{ github.event.number }} \
+                    -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref || github.ref_name }} \
+                    -Dsonar.pullrequest.base=${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            # Ensure branches are identifiable in SonarCloud
+            echo "args=-Dsonar.branch.name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: SonarCloud scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn -B -DskipTests \
+            $SONARQUBE_MAVEN_PLUGIN:sonar \
+            -Dsonar.organization=boonen \
+            -Dsonar.projectKey=boonen_jetta \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.sonar.dependencyCheck.htmlReportPath \
+            -Dsonar.scm.revision=${{ github.event.pull_request.head.sha || github.sha }} \
+            ${{ steps.sonarargs.outputs.args }}
