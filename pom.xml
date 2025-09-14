@@ -38,17 +38,18 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
 
         <!-- Plugins -->
-        <maven-surefire.version>3.3.0</maven-surefire.version>
-        <maven-failsafe.version>3.3.0</maven-failsafe.version>
-        <maven-enforcer.version>3.5.0</maven-enforcer.version>
+        <maven-surefire.version>3.5.3</maven-surefire.version>
+        <maven-failsafe.version>3.5.3</maven-failsafe.version>
+        <maven-enforcer.version>3.6.1</maven-enforcer.version>
 
         <!-- Dependencies -->
         <slf4j.version>2.0.17</slf4j.version>
         <junit.version>5.13.4</junit.version>
-        <testcontainers.version>1.21.0</testcontainers.version>
-        <assertj.version>3.27.3</assertj.version>
-        <spring-boot.version>3.5.0</spring-boot.version>
-        <jackson.version>2.19.2</jackson.version>
+        <testcontainers.version>1.21.3</testcontainers.version>
+        <assertj.version>3.27.4</assertj.version>
+        <mockito.version>5.19.0</mockito.version>
+        <spring-boot.version>3.5.5</spring-boot.version>
+        <jackson.version>2.20</jackson.version>
         <logback.version>1.5.18</logback.version>
     </properties>
 
@@ -80,6 +81,12 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
