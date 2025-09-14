@@ -1,0 +1,23 @@
+name: upload_intermediate_artifacts
+author: janb
+description: Upload intermediate artifacts of a Workflow
+
+inputs:
+  artifact-name:
+    description: 'Name of the artifact'
+    required: true
+    default: 'compiled-classes'
+  source-folder:
+    description: 'Source folder containing the artifacts'
+    required: true
+    default: './target/'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Upload /target directory
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.source-folder }}
+        if-no-files-found: error

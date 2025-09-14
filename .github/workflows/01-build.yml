@@ -19,12 +19,7 @@ jobs:
       - uses: ./.github/actions/prepare_maven_build
       - name: Build
         run: mvn ${MAVEN_CLI_OPTS} test-compile
-      - name: Upload /target directory
-        uses: actions/upload-artifact@v4
-        with:
-          name: compiled-classes
-          path: ./target/
-          if-no-files-found: error
+      - uses: ./.github/actions/upload_intermediate_artifacts
 
   test:
     runs-on: "ubuntu-latest"
@@ -32,13 +27,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
-      - name: Download compiled classes
-        uses: actions/download-artifact@v4
-        with:
-          name: compiled-classes
-          path: ./target
+      - uses: ./.github/actions/download_intermediate_artifacts
       - name: Run unit tests
         run: mvn ${MAVEN_CLI_OPTS} -DskipITs=true ${JACOCO_MAVEN_PLUGIN}:prepare-agent test ${JACOCO_MAVEN_PLUGIN}:report
+      - uses: ./.github/actions/upload_intermediate_artifacts
+        with:
+          artifact-name: unit-test-results
+          source-folder: ./target/surefire-reports/
 
   integration-test:
     runs-on: "ubuntu-latest"
@@ -46,14 +41,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
-      - name: Download compiled classes
-        uses: actions/download-artifact@v4
-        with:
-          name: compiled-classes
-          path: ./target
+      - uses: ./.github/actions/download_intermediate_artifacts
       - name: Run integration tests
         run: mvn ${MAVEN_CLI_OPTS} -DskipTests=true ${JACOCO_MAVEN_PLUGIN}:prepare-agent verify ${JACOCO_MAVEN_PLUGIN}:report
+      - uses: ./.github/actions/upload_intermediate_artifacts
+        with:
+          artifact-name: integration-test-results
+          source-folder: ./target/failsafe-reports/
+      - uses: ./.github/actions/upload_intermediate_artifacts
+        with:
+          artifact-name: coverage-reports
+          source-folder: ./target/site/jacoco/
 
   quality-check:
     needs: [test, integration-test]
     uses: ./.github/workflows/02-sonarcloud.yml
+    secrets: inherit
