@@ -67,7 +67,7 @@ public abstract class IntellijHttpClientTestSupport {
         try (
                 GenericContainer<?> ijhttpContainer = new GenericContainer<>(annotation.dockerImage())
         ) {
-            logger.info("Running all tests in {} using JetBrains' IntelliJ HTTP Client against http://{}}:{}", httpFile, ijhttpContainer.getHost(), getPort());
+            logger.info("Running all tests in {} using JetBrains' IntelliJ HTTP Client against http://{}:{}", httpFile, ijhttpContainer.getHost(), getPort());
 
             ijhttpContainer
                     .withLogConsumer(slf4jLogConsumer(LoggerFactory.getLogger("ijhttp")))
@@ -120,7 +120,7 @@ public abstract class IntellijHttpClientTestSupport {
         }
 
         command.add("--env-variables");
-        command.add("baseUrl=http://" + ijhttp.getHost() + ":" + getPort());
+        command.add("baseUrl=http://host.testcontainers.internal:" + getPort());
         command.add("--report");
         command.add(IJHTTP_WORKDIR);
         command.add("-D");
