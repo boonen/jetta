@@ -3,7 +3,6 @@ name: Build
 env:
   MAVEN_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
   MAVEN_CLI_OPTS: "-B -ntp -fae -T 2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -Dmaven.install.skip=true -Dmaven.compiler.useIncrementalCompilation=false -DlastModGranularityMs=1000000"
-  TESTCONTAINERS_HOST_OVERRIDE: "host.docker.internal"
 
 on:
   push:
