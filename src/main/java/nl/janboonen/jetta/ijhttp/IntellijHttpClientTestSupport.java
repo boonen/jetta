@@ -71,9 +71,11 @@ public abstract class IntellijHttpClientTestSupport {
 
             ijhttpContainer
                     .withLogConsumer(slf4jLogConsumer(LoggerFactory.getLogger("ijhttp")))
+                    .withExposedPorts(getPort())
+                    .withAccessToHost(true)
                     .withCopyFileToContainer(
                             MountableFile.forHostPath(httpFile),
-                            IJHTTP_WORKDIR + httpFileName
+                               IJHTTP_WORKDIR + httpFileName
                     )
                     .waitingFor(new ExitCodeWaitStrategy()
                             .withAllowedExitCodes(0, 1)
