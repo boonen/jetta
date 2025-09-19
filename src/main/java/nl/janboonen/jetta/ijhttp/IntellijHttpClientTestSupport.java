@@ -122,7 +122,7 @@ public abstract class IntellijHttpClientTestSupport {
         }
 
         command.add("--env-variables");
-        command.add("baseUrl=http://" + ijhttp.getHost() + ":" + getPort());
+        command.add("baseUrl=http://host.docker.internal:" + getPort());
         command.add("--report");
         command.add(IJHTTP_WORKDIR);
         command.add("-D");
