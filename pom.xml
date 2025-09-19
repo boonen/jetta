@@ -40,8 +40,8 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
 
         <!-- Plugins -->
-        <maven-surefire.version>3.5.3</maven-surefire.version>
-        <maven-failsafe.version>3.5.3</maven-failsafe.version>
+        <maven-surefire.version>3.5.4</maven-surefire.version>
+        <maven-failsafe.version>3.5.4</maven-failsafe.version>
         <maven-enforcer.version>3.6.1</maven-enforcer.version>
         <jacoco.version>0.8.13</jacoco.version>
 
