@@ -64,11 +64,11 @@ public abstract class IntellijHttpClientTestSupport {
             throw new JettaException("Could not create report directory: " + reportDir);
         }
 
-        logger.info("Running all tests in {} using JetBrains' IntelliJ HTTP Client against http://localhost:{}", httpFile, getPort());
-
         try (
                 GenericContainer<?> ijhttpContainer = new GenericContainer<>(annotation.dockerImage())
         ) {
+            logger.info("Running all tests in {} using JetBrains' IntelliJ HTTP Client against http://{}}:{}", httpFile, ijhttpContainer.getHost(), getPort());
+
             ijhttpContainer
                     .withLogConsumer(slf4jLogConsumer(LoggerFactory.getLogger("ijhttp")))
                     .withCopyFileToContainer(
@@ -120,7 +120,7 @@ public abstract class IntellijHttpClientTestSupport {
         }
 
         command.add("--env-variables");
-        command.add("baseUrl=http://host.docker.internal:" + getPort());
+        command.add("baseUrl=http://" + ijhttp.getHost() + ":" + getPort());
         command.add("--report");
         command.add(IJHTTP_WORKDIR);
         command.add("-D");
