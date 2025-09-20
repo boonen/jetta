@@ -101,8 +101,8 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2.20.0
         with:
           files: |
-            target/surefire-reports/*.xml
-            target/failsafe-reports/*.xml
+            target/surefire-reports/TEST-*.xml
+            target/failsafe-reports/TEST-*.xml
 
   publish-coverage:
     name: Publish coverage summary
