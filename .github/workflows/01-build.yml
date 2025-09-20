@@ -53,7 +53,7 @@ jobs:
           source-path: ./target/failsafe-reports/
       - uses: ./.github/actions/upload_intermediate_artifacts
         with:
-          artifact-name: test-coverage
+          artifact-name: integration-test-coverage
           source-path: ./target/*.exec
 
   coverage-report:
@@ -66,6 +66,10 @@ jobs:
       - uses: ./.github/actions/download_intermediate_artifacts
         with:
           artifact-name: test-coverage
+          destination-folder: ./target
+      - uses: ./.github/actions/download_intermediate_artifacts
+        with:
+          artifact-name: integration-test-coverage
           destination-folder: ./target
       - name: Generate coverage report
         run: mvn ${MAVEN_CLI_OPTS} verify -Dmaven.main.skip=true -Dmaven.test.skip=true
