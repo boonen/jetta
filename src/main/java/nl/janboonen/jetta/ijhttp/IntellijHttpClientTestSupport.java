@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.Testcontainers;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.utility.MountableFile;
@@ -28,6 +29,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 public abstract class IntellijHttpClientTestSupport {
 
     private static final String IJHTTP_WORKDIR = "/workdir/";
+
+    private static final String DOCKERHOST_HOSTNAME = "host.testcontainers.internal";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -64,10 +67,12 @@ public abstract class IntellijHttpClientTestSupport {
             throw new JettaException("Could not create report directory: " + reportDir);
         }
 
+        // expose the Spring Boot port to Testcontainers network
+        Testcontainers.exposeHostPorts(getPort());
         try (
                 GenericContainer<?> ijhttpContainer = new GenericContainer<>(annotation.dockerImage())
         ) {
-            logger.info("Running all tests in {} using JetBrains' IntelliJ HTTP Client against http://{}:{}", httpFile, ijhttpContainer.getHost(), getPort());
+            logger.info("Running all tests in {} using JetBrains' IntelliJ HTTP Client against http://{}:{}", httpFile, DOCKERHOST_HOSTNAME, getPort());
 
             ijhttpContainer
                     .withLogConsumer(slf4jLogConsumer(LoggerFactory.getLogger("ijhttp")))
@@ -75,7 +80,7 @@ public abstract class IntellijHttpClientTestSupport {
                     .withAccessToHost(true)
                     .withCopyFileToContainer(
                             MountableFile.forHostPath(httpFile),
-                               IJHTTP_WORKDIR + httpFileName
+                            IJHTTP_WORKDIR + httpFileName
                     )
                     .waitingFor(new ExitCodeWaitStrategy()
                             .withAllowedExitCodes(0, 1)
@@ -122,7 +127,7 @@ public abstract class IntellijHttpClientTestSupport {
         }
 
         command.add("--env-variables");
-        command.add("baseUrl=http://host.docker.internal:" + getPort());
+        command.add("baseUrl=" + DOCKERHOST_HOSTNAME + ":" + getPort());
         command.add("--report");
         command.add(IJHTTP_WORKDIR);
         command.add("-D");
