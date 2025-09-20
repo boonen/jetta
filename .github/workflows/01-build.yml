@@ -98,7 +98,7 @@ jobs:
           artifact-name: integration-test-results
           destination-folder: ./target/failsafe-reports
       - name: Publish JUnit results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: EnricoMi/publish-unit-test-result-action@v2.20.0
         with:
           files: |
             target/surefire-reports/*.xml
@@ -133,7 +133,7 @@ jobs:
       - name: Add coverage to job summary
         run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
       - name: Comment coverage on PR
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v2.9.4
         with:
           recreate: true
           path: code-coverage-results.md
