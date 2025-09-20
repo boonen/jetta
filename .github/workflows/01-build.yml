@@ -141,5 +141,8 @@ jobs:
   quality-check:
     needs: coverage-report
     uses: ./.github/workflows/02-sonarcloud.yml
+    permissions:
+      contents: read
+      pull-requests: write
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
