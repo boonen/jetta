@@ -78,69 +78,6 @@ jobs:
           artifact-name: coverage-report
           source-path: ./target/site/jacoco-aggregate/
 
-  publish-test-results:
-    name: Publish test results
-    if: ${{ github.event_name == 'pull_request' }}
-    needs: [test, integration-test]
-    runs-on: ubuntu-latest
-    permissions:
-      checks: write
-      pull-requests: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/download_intermediate_artifacts
-        with:
-          artifact-name: unit-test-results
-          destination-folder: ./target/surefire-reports
-      - uses: ./.github/actions/download_intermediate_artifacts
-        with:
-          artifact-name: integration-test-results
-          destination-folder: ./target/failsafe-reports
-      - name: Publish JUnit results
-        uses: EnricoMi/publish-unit-test-result-action@v2.20.0
-        with:
-          files: |
-            target/surefire-reports/TEST-*.xml
-            target/failsafe-reports/TEST-*.xml
-
-  publish-coverage:
-    name: Publish coverage summary
-    if: ${{ github.event_name == 'pull_request' }}
-    needs: coverage-report
-    runs-on: "ubuntu-latest"
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/download_intermediate_artifacts
-        with:
-          artifact-name: coverage-report
-          destination-folder: ./target/site/jacoco
-      - name: Generate coverage summary
-        uses: irongut/CodeCoverageSummary@v1.3.0
-        with:
-          filename: target/site/jacoco/jacoco.xml
-          badge: true
-          fail_below_min: false
-          format: markdown
-          hide_branch_rate: false
-          hide_complexity: fals
-          indicators: true
-          output: both
-          thresholds: '80 80'
-      - name: Add coverage to job summary
-        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
-      - name: Comment coverage on PR
-        uses: marocchino/sticky-pull-request-comment@v2.9.4
-        with:
-          recreate: true
-          path: code-coverage-results.md
-
   quality-check:
     needs: coverage-report
     uses: ./.github/workflows/02-sonarcloud.yml
