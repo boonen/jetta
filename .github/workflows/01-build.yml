@@ -3,7 +3,6 @@ name: Build
 env:
   MAVEN_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
   MAVEN_CLI_OPTS: "-B -ntp -fae -T 2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -Dmaven.install.skip=true -Dmaven.compiler.useIncrementalCompilation=false -DlastModGranularityMs=1000000"
-  JACOCO_MAVEN_PLUGIN: "org.jacoco:jacoco-maven-plugin:0.8.13"
 
 on:
   push:
@@ -29,11 +28,15 @@ jobs:
       - uses: ./.github/actions/prepare_maven_build
       - uses: ./.github/actions/download_intermediate_artifacts
       - name: Run unit tests
-        run: mvn ${MAVEN_CLI_OPTS} -DskipITs=true ${JACOCO_MAVEN_PLUGIN}:prepare-agent test ${JACOCO_MAVEN_PLUGIN}:report
+        run: mvn ${MAVEN_CLI_OPTS} -DskipITs test
       - uses: ./.github/actions/upload_intermediate_artifacts
         with:
           artifact-name: unit-test-results
-          source-folder: ./target/surefire-reports/
+          source-path: ./target/surefire-reports/
+      - uses: ./.github/actions/upload_intermediate_artifacts
+        with:
+          artifact-name: test-coverage
+          source-path: ./target/*.exec
 
   integration-test:
     runs-on: "ubuntu-latest"
@@ -43,17 +46,43 @@ jobs:
       - uses: ./.github/actions/prepare_maven_build
       - uses: ./.github/actions/download_intermediate_artifacts
       - name: Run integration tests
-        run: mvn ${MAVEN_CLI_OPTS} -DskipTests=true ${JACOCO_MAVEN_PLUGIN}:prepare-agent verify ${JACOCO_MAVEN_PLUGIN}:report
+        run: mvn ${MAVEN_CLI_OPTS} -DskipUnitTests verify
       - uses: ./.github/actions/upload_intermediate_artifacts
         with:
           artifact-name: integration-test-results
-          source-folder: ./target/failsafe-reports/
+          source-path: ./target/failsafe-reports/
       - uses: ./.github/actions/upload_intermediate_artifacts
         with:
-          artifact-name: coverage-reports
-          source-folder: ./target/site/jacoco/
+          artifact-name: integration-test-coverage
+          source-path: ./target/*.exec
+
+  coverage-report:
+    runs-on: "ubuntu-latest"
+    needs: [ test, integration-test ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/prepare_maven_build
+      - uses: ./.github/actions/download_intermediate_artifacts
+      - uses: ./.github/actions/download_intermediate_artifacts
+        with:
+          artifact-name: test-coverage
+          destination-folder: ./target
+      - uses: ./.github/actions/download_intermediate_artifacts
+        with:
+          artifact-name: integration-test-coverage
+          destination-folder: ./target
+      - name: Generate coverage report
+        run: mvn ${MAVEN_CLI_OPTS} verify -Dmaven.main.skip=true -Dmaven.test.skip=true
+      - uses: ./.github/actions/upload_intermediate_artifacts
+        with:
+          artifact-name: coverage-report
+          source-path: ./target/site/jacoco-aggregate/
 
   quality-check:
-    needs: [test, integration-test]
+    needs: coverage-report
     uses: ./.github/workflows/02-sonarcloud.yml
-    secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: write
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

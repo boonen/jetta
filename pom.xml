@@ -31,6 +31,8 @@
         <!-- Build -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>24</maven.compiler.release>
+        <skipUnitTests>false</skipUnitTests>
+        <maven.surefire.skip>${skipUnitTests}</maven.surefire.skip>
 
         <!-- SonarCloud -->
         <sonar.organization>boonen</sonar.organization>
@@ -38,9 +40,10 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
 
         <!-- Plugins -->
-        <maven-surefire.version>3.5.3</maven-surefire.version>
-        <maven-failsafe.version>3.5.3</maven-failsafe.version>
+        <maven-surefire.version>3.5.4</maven-surefire.version>
+        <maven-failsafe.version>3.5.4</maven-failsafe.version>
         <maven-enforcer.version>3.6.1</maven-enforcer.version>
+        <jacoco.version>0.8.13</jacoco.version>
 
         <!-- Dependencies -->
         <slf4j.version>2.0.17</slf4j.version>
@@ -48,7 +51,7 @@
         <testcontainers.version>1.21.3</testcontainers.version>
         <assertj.version>3.27.4</assertj.version>
         <mockito.version>5.19.0</mockito.version>
-        <spring-boot.version>3.5.5</spring-boot.version>
+        <spring-boot.version>3.5.6</spring-boot.version>
         <jackson.version>2.20</jackson.version>
         <logback.version>1.5.18</logback.version>
     </properties>
@@ -133,6 +136,11 @@
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>${maven-enforcer.version}</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -161,6 +169,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- skips surefire tests without skipping failsafe tests -->
+                    <skipTests>${maven.surefire.skip}</skipTests>
+                </configuration>
             </plugin>
 
             <!-- Integration tests -->
@@ -179,6 +191,70 @@
                             <includes>
                                 <include>**/*IT.java</include>
                             </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>pre-unit-test</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>post-unit-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>pre-integration-test</id>
+                        <goals>
+                            <goal>prepare-agent-integration</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>post-integration-test</id>
+                        <goals>
+                            <goal>report-integration</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>merge-results</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>merge</goal>
+                        </goals>
+                        <configuration>
+                            <fileSets>
+                                <fileSet>
+                                    <directory>${project.build.directory}</directory>
+                                    <includes>
+                                        <include>*.exec</include>
+                                    </includes>
+                                    <excludes>
+                                        <exclude>aggregate.exec</exclude>
+                                    </excludes>
+                                </fileSet>
+                            </fileSets>
+                            <destFile>${project.build.directory}/aggregate.exec</destFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>post-merge-report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/aggregate.exec</dataFile>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-aggregate</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

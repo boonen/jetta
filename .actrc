@@ -1,5 +1,5 @@
 --env-file .env
 --secret-file .act_secrets
 -P ubuntu-latest=quay.io/jamezp/act-maven
---artifact-server-path $(PWD)/.artifacts
+--artifact-server-path ./.artifacts
 --artifact-server-addr 127.0.0.1

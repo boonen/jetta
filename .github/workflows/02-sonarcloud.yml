@@ -2,9 +2,13 @@ name: QualityGate
 
 env:
   SONARQUBE_MAVEN_PLUGIN: "org.sonarsource.scanner.maven:sonar-maven-plugin:5.2.0.4988"
+  SONARCLOUD_PLAN: "free"
 
 on:
   workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        required: true
 
 jobs:
   sonar:
@@ -25,29 +29,44 @@ jobs:
           destination-folder: ./target/failsafe-reports
       - uses: ./.github/actions/download_intermediate_artifacts
         with:
-          artifact-name: coverage-reports
+          artifact-name: coverage-report
           destination-folder: ./target/site/jacoco
       - name: Assemble Sonar arguments
         id: sonarargs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+          GIT_SHA: ${{ github.sha }}
         shell: bash
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "args=-Dsonar.pullrequest.key=${{ github.event.number }} \
-                    -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref || github.ref_name }} \
-                    -Dsonar.pullrequest.base=${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          plan="${SONARCLOUD_PLAN,,}"
+      
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            base_branch="main"
+            [[ "$plan" != "free" && -n "$PR_BASE_REF" ]] && base_branch="$PR_BASE_REF"
+            pr_branch="${PR_HEAD_REF:-$REF_NAME}"
+            echo "SONAR_ARGS=-Dsonar.pullrequest.key=$PR_NUMBER -Dsonar.pullrequest.branch=$pr_branch -Dsonar.pullrequest.base=$base_branch" >> "$GITHUB_OUTPUT"
+            echo "SCM_REV=$PR_SHA" >> "$GITHUB_OUTPUT"
           else
-            # Ensure branches are identifiable in SonarCloud
-            echo "args=-Dsonar.branch.name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            branch="main"
+            [[ "$plan" != "free" ]] && branch="$REF_NAME"
+            echo "SONAR_ARGS=-Dsonar.branch.name=$branch" >> "$GITHUB_OUTPUT"
+            echo "SCM_REV=$GIT_SHA" >> "$GITHUB_OUTPUT"
           fi
+
       - name: SonarCloud scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           mvn -B -DskipTests \
-            $SONARQUBE_MAVEN_PLUGIN:sonar \
+            ${{ env.SONARQUBE_MAVEN_PLUGIN }}:sonar \
             -Dsonar.organization=boonen \
             -Dsonar.projectKey=boonen_jetta \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-            -Dsonar.sonar.dependencyCheck.htmlReportPath \
-            -Dsonar.scm.revision=${{ github.event.pull_request.head.sha || github.sha }} \
-            ${{ steps.sonarargs.outputs.args }}
+            -Dsonar.scm.revision=${{ steps.sonarargs.outputs.SCM_REV }} \
+            ${{ steps.sonarargs.outputs.SONAR_ARGS }}

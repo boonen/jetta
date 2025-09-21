@@ -1,10 +1,12 @@
 package nl.janboonen.jetta.ijhttp;
 
+import nl.janboonen.jetta.exception.JettaException;
 import nl.janboonen.jetta.testcontainers.ExitCodeWaitStrategy;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.Testcontainers;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.utility.MountableFile;
@@ -26,7 +28,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public abstract class IntellijHttpClientTestSupport {
 
-    private  static final String IJHTTP_WORKDIR = "/workdir/";
+    private static final String IJHTTP_WORKDIR = "/workdir/";
+
+    private static final String DOCKERHOST_HOSTNAME = "host.testcontainers.internal";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -43,7 +47,7 @@ public abstract class IntellijHttpClientTestSupport {
             documentFactory = DocumentBuilderFactory.newInstance();
             documentFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         } catch (ParserConfigurationException e) {
-            throw new RuntimeException("Failed to configure XML parser", e);
+            throw new JettaException("Failed to configure XML parser", e);
         }
     }
 
@@ -52,7 +56,7 @@ public abstract class IntellijHttpClientTestSupport {
     }
 
     @TestFactory
-    List<DynamicTest> generateHttpTests() throws Exception {
+    List<DynamicTest> generateHttpTests() {
         var httpFile = Paths.get(annotation.value()).toAbsolutePath();
         var httpFileName = httpFile.getFileName().toString();
         var reportFileName = "report.xml";
@@ -60,16 +64,20 @@ public abstract class IntellijHttpClientTestSupport {
         var reportFile = reportDir.resolve(reportFileName);
         boolean isCreated = reportDir.toFile().mkdirs();
         if (!isCreated && !reportDir.toFile().exists()) {
-            throw new IOException("Could not create report directory: " + reportDir);
+            throw new JettaException("Could not create report directory: " + reportDir);
         }
 
-        logger.info("Running all tests in {} using JetBrains' IntelliJ HTTP Client against http://localhost:{}", httpFile, getPort());
-
+        // expose the Spring Boot port to Testcontainers network
+        Testcontainers.exposeHostPorts(getPort());
         try (
                 GenericContainer<?> ijhttpContainer = new GenericContainer<>(annotation.dockerImage())
         ) {
+            logger.info("Running all tests in {} using JetBrains' IntelliJ HTTP Client against http://{}:{}", httpFile, DOCKERHOST_HOSTNAME, getPort());
+
             ijhttpContainer
                     .withLogConsumer(slf4jLogConsumer(LoggerFactory.getLogger("ijhttp")))
+                    .withExposedPorts(getPort())
+                    .withAccessToHost(true)
                     .withCopyFileToContainer(
                             MountableFile.forHostPath(httpFile),
                             IJHTTP_WORKDIR + httpFileName
@@ -80,7 +88,7 @@ public abstract class IntellijHttpClientTestSupport {
             ijhttpContainer.start();
             ijhttpContainer.copyFileFromContainer(IJHTTP_WORKDIR + reportFileName, reportFile.toString());
             if (!reportFile.toFile().exists()) {
-                throw new IllegalStateException("ijhttpContainer did not produce a report: " + reportFile);
+                throw new JettaException("ijhttpContainer did not produce a report: " + reportFile);
             }
         }
 
@@ -119,7 +127,7 @@ public abstract class IntellijHttpClientTestSupport {
         }
 
         command.add("--env-variables");
-        command.add("baseUrl=http://host.docker.internal:" + getPort());
+        command.add("baseUrl=" + DOCKERHOST_HOSTNAME + ":" + getPort());
         command.add("--report");
         command.add(IJHTTP_WORKDIR);
         command.add("-D");
@@ -128,22 +136,27 @@ public abstract class IntellijHttpClientTestSupport {
         return command.toArray(new String[0]);
     }
 
-    private List<DynamicTest> extractTestCases(Path reportFile) throws SAXException, IOException, ParserConfigurationException {
+    @SuppressWarnings("java:S5960")
+    private List<DynamicTest> extractTestCases(Path reportFile) {
         List<DynamicTest> tests = new ArrayList<>();
-        var doc = documentFactory.newDocumentBuilder().parse(reportFile.toFile());
-        var testcases = doc.getElementsByTagName("testcase");
+        try {
+            var doc = documentFactory.newDocumentBuilder().parse(reportFile.toFile());
+            var testcases = doc.getElementsByTagName("testcase");
 
-        for (int i = 0; i < testcases.getLength(); i++) {
-            var node = testcases.item(i);
-            var name = node.getAttributes().getNamedItem("name").getTextContent();
-            var failed = node.getChildNodes().getLength() > 0;
-            var failureMessage = failed ? node.getChildNodes().item(0).getTextContent().trim() : null;
+            for (int i = 0; i < testcases.getLength(); i++) {
+                var node = testcases.item(i);
+                var name = node.getAttributes().getNamedItem("name").getTextContent();
+                var failed = node.getChildNodes().getLength() > 0;
+                var failureMessage = failed ? node.getChildNodes().item(0).getTextContent().trim() : null;
 
-            tests.add(DynamicTest.dynamicTest(name, () -> {
-                if (failed) {
-                    fail("ijhttp test failed: " + failureMessage);
-                }
-            }));
+                tests.add(DynamicTest.dynamicTest(name, () -> {
+                    if (failed) {
+                        fail("ijhttp test failed: " + failureMessage);
+                    }
+                }));
+            }
+        } catch (IOException | SAXException | ParserConfigurationException e) {
+            throw new JettaException("Failed to parse ijhttp report: " + reportFile, e);
         }
         return tests;
     }
