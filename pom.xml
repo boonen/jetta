@@ -140,6 +140,7 @@
                             <version>${maven-surefire-junit5-tree-reporter.version}</version>
                         </dependency>
                     </dependencies>
+                    <!-- Configure JUnit5 so that names of dynamically generated tests are included in reports -->
                     <configuration>
                         <statelessTestsetReporter
                                 implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
