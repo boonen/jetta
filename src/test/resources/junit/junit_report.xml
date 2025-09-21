@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-failsafe-plugin/xsd/failsafe-test-report.xsd" version="3.0.2" name="nl.janboonen.jetta.ijhttp.DefaultIntelliJHttpClientFileIT" time="7.736" tests="4" errors="0" skipped="0" failures="0">
+  <testcase name="generateHttpTests() Response" classname="nl.janboonen.jetta.ijhttp.DefaultIntelliJHttpClientFileIT" time="0.004"/>
+  <testcase name="generateHttpTests() Request executed successfully" classname="nl.janboonen.jetta.ijhttp.DefaultIntelliJHttpClientFileIT" time="0.001"/>
+  <testcase name="generateHttpTests() Response content-type is json" classname="nl.janboonen.jetta.ijhttp.DefaultIntelliJHttpClientFileIT" time="0.0"/>
+    <testcase name="generateHttpTests() Response Handler" classname="nl.janboonen.jetta.ijhttp.DefaultIntelliJHttpClientFileIT" time="0.0"><failure>something went wrong</failure></testcase>
+</testsuite>
