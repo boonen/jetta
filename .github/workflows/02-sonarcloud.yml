@@ -67,6 +67,7 @@ jobs:
             ${{ env.SONARQUBE_MAVEN_PLUGIN }}:sonar \
             -Dsonar.organization=boonen \
             -Dsonar.projectKey=boonen_jetta \
+            -Dsonar.qualitygate.wait=true \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             -Dsonar.scm.revision=${{ steps.sonarargs.outputs.SCM_REV }} \
             ${{ steps.sonarargs.outputs.SONAR_ARGS }}

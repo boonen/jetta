@@ -26,7 +26,7 @@ runs:
         key: ${{ github.ref_name }}-maven-${{ github.action }}-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           ${{ github.ref_name }}-maven-
-    - name: Set up JDK 24
+    - name: Set up JDK
       uses: actions/setup-java@v4
       with:
         distribution: ${{ inputs.java-distribution }}
