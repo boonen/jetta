@@ -3,7 +3,7 @@ target/
 .flattened-pom.xml
 
 # GitHub act
-.act_secrets
+.github/act/.act_secrets
 .artifacts/
 
 # IDE files
