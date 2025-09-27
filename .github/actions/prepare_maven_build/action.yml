@@ -4,9 +4,9 @@ description: Prepare a cached Maven build
 
 inputs:
   java-version:
-    description: 'Java version to use (e.g., 24)'
+    description: 'Java version to use (e.g., 25)'
     required: true
-    default: '24'
+    default: '25'
   java-distribution:
     description: 'Java distribution to use (e.g., temurin, zulu, etc.)'
     required: false
@@ -35,6 +35,7 @@ runs:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
     - name: Configure Maven
+      shell: bash
       run: |
         echo "MAVEN_OPTS=${{ inputs.maven-opts }}" >> "$GITHUB_ENV"
         echo "MAVEN_CLI_ARGS=${{ inputs.maven-cli-arguments }}" >> "$GITHUB_ENV"
