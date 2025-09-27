@@ -41,9 +41,11 @@
 
         <!-- Plugins -->
         <maven-surefire.version>3.5.4</maven-surefire.version>
+        <maven-surefire-junit5-tree-reporter.version>1.4.0</maven-surefire-junit5-tree-reporter.version>
         <maven-failsafe.version>3.5.4</maven-failsafe.version>
         <maven-enforcer.version>3.6.1</maven-enforcer.version>
         <jacoco.version>0.8.13</jacoco.version>
+        <flatten-maven-plugin.version>1.1.0</flatten-maven-plugin.version>
 
         <!-- Dependencies -->
         <slf4j.version>2.0.17</slf4j.version>
@@ -54,7 +56,6 @@
         <spring-boot.version>3.5.6</spring-boot.version>
         <jackson.version>2.20</jackson.version>
         <logback.version>1.5.18</logback.version>
-        <maven-surefire-junit5-tree-reporter.version>1.4.0</maven-surefire-junit5-tree-reporter.version>
         <byte-buddy.version>1.17.7</byte-buddy.version>
     </properties>
 
@@ -327,6 +328,31 @@
                             <dataFile>${project.build.directory}/aggregate.exec</dataFile>
                             <outputDirectory>${project.reporting.outputDirectory}/jacoco-aggregate</outputDirectory>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>${flatten-maven-plugin.version}</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
