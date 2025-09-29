@@ -19,7 +19,8 @@ jobs:
       - uses: ./.github/actions/prepare_maven_build
       - uses: ./.github/actions/download_intermediate_artifacts
         with:
-          run-id: "${{ github.event.workflow_run.id }}"
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Deploy snapshot
         run: mvn ${MAVEN_CLI_ARGS} -DskipTests deploy
         env:
