@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   packages: write
+  actions: read
 
 jobs:
   deploy-snapshot:
@@ -15,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: "Debug variables"
+      - name: "Pipeline variables"
         shell: bash
         run: |
           echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
@@ -25,6 +26,9 @@ jobs:
           echo "WORKFLOW_RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}"
       - uses: ./.github/actions/prepare_maven_build
       - uses: ./.github/actions/download_intermediate_artifacts
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Deploy snapshot
         run: mvn ${MAVEN_CLI_ARGS} -DskipTests deploy
         env:
