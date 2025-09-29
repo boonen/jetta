@@ -4,17 +4,20 @@ description: Prepare a cached Maven build
 
 inputs:
   java-version:
-    description: 'Java version to use (e.g., 24)'
+    description: 'Java version to use (e.g., 25)'
     required: true
-    default: '24'
+    default: '25'
   java-distribution:
     description: 'Java distribution to use (e.g., temurin, zulu, etc.)'
     required: false
     default: 'temurin'
-
-#env:
-#  MAVEN_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Dmaven.repo.local=${CI_PROJECT_DIR}/.m2/repository"
-#  MAVEN_CLI_OPTS: "-B -ntp -fae -T 2C -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -Dmaven.install.skip=true -Dmaven.compiler.useIncrementalCompilation=false -DlastModGranularityMs=1000000"
+  maven-opts:
+    description: "MAVEN_OPTS to use for the build"
+    required: true
+    default: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+  maven-cli-arguments:
+    description: "Command-line arguments to use in every build"
+    default: "-B -ntp -fae -T 2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -Dmaven.install.skip=true -Dmaven.compiler.useIncrementalCompilation=false -DlastModGranularityMs=1000000"
 
 runs:
   using: "composite"
@@ -26,8 +29,13 @@ runs:
         key: ${{ github.ref_name }}-maven-${{ github.action }}-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           ${{ github.ref_name }}-maven-
-    - name: Set up JDK 24
+    - name: Set up JDK
       uses: actions/setup-java@v4
       with:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
+    - name: Configure Maven
+      shell: bash
+      run: |
+        echo "MAVEN_OPTS=${{ inputs.maven-opts }}" >> "$GITHUB_ENV"
+        echo "MAVEN_CLI_ARGS=${{ inputs.maven-cli-arguments }}" >> "$GITHUB_ENV"
