@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   workflow_run:
-    workflows: ["QualityGate"]
+    workflows: ["Build"]
     types: [completed]
 
 permissions:
