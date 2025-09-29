@@ -12,11 +12,11 @@ permissions:
 
 jobs:
   deploy-snapshot:
-#    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: "Debug variables"
+      - name: "Pipeline variables"
         shell: bash
         run: |
           echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
