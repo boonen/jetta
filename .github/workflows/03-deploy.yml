@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
       - name: "Debug variables"
+        shell: bash
         run: |
           echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
           echo "GITHUB_REF: $GITHUB_REF"
