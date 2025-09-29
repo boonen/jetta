@@ -8,15 +8,18 @@ on:
 permissions:
   contents: read
   packages: write
+  actions: read
 
 jobs:
   deploy-snapshot:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}
+#    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
       - uses: ./.github/actions/download_intermediate_artifacts
+        with:
+          run-id: "${{ github.event.workflow_run.id }}"
       - name: Deploy snapshot
         run: mvn ${MAVEN_CLI_ARGS} -DskipTests deploy
         env:

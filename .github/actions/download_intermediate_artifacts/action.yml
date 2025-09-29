@@ -11,6 +11,10 @@ inputs:
     description: 'Folder to download the artifact to'
     required: true
     default: './target/'
+  run-id:
+    description: 'The run id to download the artifact from. If not set, the current run is used.'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -20,3 +24,5 @@ runs:
       with:
         name: ${{ inputs.artifact-name }}
         path: ${{ inputs.destination-folder }}
+        run-id: '${{ inputs.run-id }}'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
