@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+jobs:
+  preflight:
+    name: Preflight checks
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.read_version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/prepare_maven_build
+      - name: Read version from pom.xml
+        id: read_version
+        run: echo "version=$(mvn -q -DforceStdout -Dexpression=project.version help:evaluate)" >> "$GITHUB_OUTPUT"
+      - name: Fail if tag with this revision already exists
+        if: ${{ env.ACT != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          REV="${{ steps.read_version.outputs.version }}"
+          git fetch --tags --quiet
+          if git rev-parse -q --verify "refs/tags/${REV}" >/dev/null; then
+            echo "The release version already exists. Please first update the \`revision\` in \`pom.xml\` and create the release again."
+            exit 1
+          fi
+      - name: Ensure release commit is on main
+        if: ${{ env.ACT != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.release.tag_name }}"
+          git fetch origin main --quiet
+          TAG_SHA="$(git rev-list -n 1 "refs/tags/${TAG}")"
+          MAIN_SHA="$(git rev-parse origin/main)"
+          BASE="$(git merge-base "$TAG_SHA" "$MAIN_SHA")"
+          if [[ "$BASE" != "$TAG_SHA" ]]; then
+            echo "The release tag ($TAG) is not pointing to a commit contained in the 'main' branch."
+            exit 1
+          fi
+
+  build:
+    name: Build
+    needs: preflight
+    uses: ./.github/workflows/01-build.yml
+
+  quality-gate:
+    name: Verify code quality
+    needs: build
+    uses: ./.github/workflows/02-sonarcloud.yml
+    permissions:
+      contents: read
+      pull-requests: write
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  release:
+    name: Release
+    needs: [preflight, quality-gate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/prepare_maven_build
+      - name: Verify non-snapshot version
+        run: |
+          VERSION="${{ needs.preflight.outputs.VERSION }}"
+          if [[ "$VERSION" == *"-SNAPSHOT" ]]; then
+            echo "This workflow must deploy a non-snapshot version. Current version is: $VERSION"
+            exit 1
+          fi
+      - uses: ./.github/actions/download_intermediate_artifacts
+      - name: Deploy release artifacts (GitHub Packages)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn ${MAVEN_CLI_OPTS} -Dchangelist= -DskipTests deploy
+      - name: Finalize GitHub Release (generate notes)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "${{ github.event.release.tag_name }}" --draft=false --generate-notes
