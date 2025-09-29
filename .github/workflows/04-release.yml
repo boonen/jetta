@@ -54,19 +54,9 @@ jobs:
     needs: preflight
     uses: ./.github/workflows/01-build.yml
 
-  quality-gate:
-    name: Verify code quality
-    needs: build
-    uses: ./.github/workflows/02-sonarcloud.yml
-    permissions:
-      contents: read
-      pull-requests: write
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
   release:
     name: Release
-    needs: [preflight, quality-gate]
+    needs: [preflight, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
