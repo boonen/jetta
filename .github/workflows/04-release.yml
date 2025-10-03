@@ -22,7 +22,7 @@ jobs:
       - uses: ./.github/actions/prepare_maven_build
       - name: Read version from pom.xml
         id: read_version
-        run: echo "version=$(mvn -q -DforceStdout -Dexpression=project.version help:evaluate)" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(mvn -q -DforceStdout -Dchangelist= -Dexpression=project.version help:evaluate)" >> "$GITHUB_OUTPUT"
       - name: Fail if tag with this revision already exists
         if: ${{ env.ACT != 'true' }}
         shell: bash
@@ -48,6 +48,15 @@ jobs:
             echo "The release tag ($TAG) is not pointing to a commit contained in the 'main' branch."
             exit 1
           fi
+      - name: "Pipeline variables"
+        shell: bash
+        run: |
+          echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "GITHUB_SHA: $GITHUB_SHA"
+          echo "WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}"
+          echo "WORKFLOW_RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}"
+          echo "VERSION: $GITHUB_OUTPUT"
 
   build:
     name: Build

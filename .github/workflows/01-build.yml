@@ -83,7 +83,7 @@ jobs:
           source-path: ./target/site/jacoco-aggregate/
 
   quality-check:
-    if: ${{ github.event_name != 'workflow_call' }}
+    if: ${{ github.event_name != 'workflow_run' }}
     needs: coverage-report
     uses: ./.github/workflows/02-sonarcloud.yml
     permissions:
