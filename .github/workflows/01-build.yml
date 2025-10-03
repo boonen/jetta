@@ -15,7 +15,7 @@ on:
         value: ${{ jobs.build.outputs.run-id }}
 
 jobs:
-  build:
+  compile:
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +26,7 @@ jobs:
 
   test:
     runs-on: "ubuntu-latest"
-    needs: build
+    needs: compile
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
@@ -44,7 +44,7 @@ jobs:
 
   integration-test:
     runs-on: "ubuntu-latest"
-    needs: build
+    needs: compile
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
@@ -61,6 +61,7 @@ jobs:
           source-path: ./target/*.exec
 
   coverage-report:
+    if: ${{ github.event_name != 'release' }}
     runs-on: "ubuntu-latest"
     needs: [ test, integration-test ]
     steps:
@@ -83,7 +84,7 @@ jobs:
           source-path: ./target/site/jacoco-aggregate/
 
   quality-check:
-    if: ${{ github.event_name != 'workflow_run' }}
+    if: ${{ github.event_name != 'release' }}
     needs: coverage-report
     uses: ./.github/workflows/02-sonarcloud.yml
     permissions:

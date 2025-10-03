@@ -11,7 +11,6 @@ permissions:
 
 jobs:
   preflight:
-    name: Preflight checks
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.read_version.outputs.version }}
@@ -56,17 +55,15 @@ jobs:
           echo "GITHUB_SHA: $GITHUB_SHA"
           echo "WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}"
           echo "WORKFLOW_RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}"
-          echo "VERSION: $GITHUB_OUTPUT"
+          echo "VERSION: ${{ steps.read_version.outputs.version }}"
 
   build:
-    name: Build
     needs: preflight
     uses: ./.github/workflows/01-build.yml
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   release:
-    name: Release
     needs: [preflight, build]
     runs-on: ubuntu-latest
     steps:
@@ -81,7 +78,7 @@ jobs:
           fi
       - uses: ./.github/actions/download_intermediate_artifacts
         with:
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ needs.build.outputs.run-id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Deploy release artifacts (GitHub Packages)
         env:
