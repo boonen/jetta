@@ -53,6 +53,8 @@ jobs:
     name: Build
     needs: preflight
     uses: ./.github/workflows/01-build.yml
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   release:
     name: Release
@@ -69,6 +71,9 @@ jobs:
             exit 1
           fi
       - uses: ./.github/actions/download_intermediate_artifacts
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Deploy release artifacts (GitHub Packages)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

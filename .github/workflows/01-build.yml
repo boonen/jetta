@@ -5,6 +5,14 @@ on:
     branches:
       - "main"
   pull_request:
+  workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        required: true
+    outputs:
+      run-id:
+        description:
+        value: ${{ jobs.build.outputs.run-id }}
 
 jobs:
   build:
@@ -75,6 +83,7 @@ jobs:
           source-path: ./target/site/jacoco-aggregate/
 
   quality-check:
+    if: ${{ github.event_name != 'workflow_call' }}
     needs: coverage-report
     uses: ./.github/workflows/02-sonarcloud.yml
     permissions:
