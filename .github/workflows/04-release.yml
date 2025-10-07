@@ -47,15 +47,6 @@ jobs:
             echo "The release tag ($TAG) is not pointing to a commit contained in the 'main' branch."
             exit 1
           fi
-      - name: "Pipeline variables"
-        shell: bash
-        run: |
-          echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
-          echo "GITHUB_REF: $GITHUB_REF"
-          echo "GITHUB_SHA: $GITHUB_SHA"
-          echo "WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}"
-          echo "WORKFLOW_RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}"
-          echo "VERSION: ${{ steps.read_version.outputs.version }}"
 
   build:
     needs: preflight

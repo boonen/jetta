@@ -39,3 +39,14 @@ runs:
       run: |
         echo "MAVEN_OPTS=${{ inputs.maven-opts }}" >> "$GITHUB_ENV"
         echo "MAVEN_CLI_ARGS=${{ inputs.maven-cli-arguments }}" >> "$GITHUB_ENV"
+    - name: List pipeline variables
+      shell: bash
+      run: |
+        echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
+        echo "GITHUB_REF: $GITHUB_REF"
+        echo "GITHUB_SHA: $GITHUB_SHA"
+        echo "GITHUB_JOB: $GITHUB_JOB"   # reference the default environment variables
+        echo "GITHUB_RUN_ID: $GITHUB_RUN_ID"
+        echo "GITHUB_ACTOR: $GITHUB_ACTOR"
+        echo "WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}"
+        echo "WORKFLOW_RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}"
