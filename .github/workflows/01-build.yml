@@ -12,7 +12,7 @@ on:
     outputs:
       run-id:
         description:
-        value: ${{ jobs.build.outputs.run-id }}
+        value: ${{ jobs.compile.outputs.run-id }}
 
 jobs:
   compile:

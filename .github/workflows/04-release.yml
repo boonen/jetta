@@ -60,6 +60,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/prepare_maven_build
+      - name: Debug output of Build workflow
+        run: |
+          echo "Run-id of compile step: ${{ needs.build.outputs.run-id }}"
       - name: Verify non-snapshot version
         run: |
           VERSION="${{ needs.preflight.outputs.VERSION }}"
