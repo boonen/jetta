@@ -68,9 +68,6 @@ jobs:
             exit 1
           fi
       - uses: ./.github/actions/download_intermediate_artifacts
-        with:
-          run-id: ${{ needs.build.outputs.run-id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Deploy release artifacts (GitHub Packages)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
