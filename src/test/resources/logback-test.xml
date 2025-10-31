@@ -6,11 +6,11 @@
         </encoder>
     </appender>
 
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="STDOUT"/>
     </root>
 
     <logger name="org.testcontainers" level="WARN"/>
-    <logger name="ijhttp" level="INFO"/>
-    <logger name="nl.janboonen.jetta" level="DEBUG"/>
+    <logger name="ijhttp" level="WARN"/>
+    <logger name="nl.janboonen.jetta" level="INFO"/>
 </configuration>
